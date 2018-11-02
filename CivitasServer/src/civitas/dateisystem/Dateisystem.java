@@ -51,7 +51,8 @@ public class Dateisystem  implements Serializable{
 		} catch (MalformedURLException e) {
 		}
 		if(url == null) {
-debug("Die Datei " + angeforderterDateipfad + " konnte nicht ausgelesen werden.");
+			//
+			debug("Die Datei " + angeforderterDateipfad + " konnte nicht ausgelesen werden.");
 		}
 		return url;
 		
@@ -66,7 +67,8 @@ debug("Die Datei " + angeforderterDateipfad + " konnte nicht ausgelesen werden."
 			
 			//Zieldatei ermitteln
 			File zieldatei = new File( getDateipfad(saveable) );
-debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
+			//
+			debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
 			
 			/*
 			 * Serialisieren bzw. speichern
@@ -74,6 +76,8 @@ debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
 			FileOutputStream fileout  = null;
 			ObjectOutputStream objectout = null;
 			try {
+				zieldatei.getParentFile().mkdirs();
+				zieldatei.createNewFile();
 				fileout = new FileOutputStream(zieldatei);
 				objectout = new ObjectOutputStream(fileout);
 				objectout.writeObject(saveable);
@@ -84,10 +88,13 @@ debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
 							} catch (FileNotFoundException e1) {
 										if(CivitasMain.debug)
 											e1.printStackTrace();
-debug("Speichern fehlgeschlagen: Es konnte keine entsprechende Datei erzeugt werden.");
+										//
+										debug("Speichern fehlgeschlagen: Es konnte keine entsprechende Datei erzeugt werden.");
 										return;
 							} catch (IOException e) { 
-debug("IOException für " + zieldatei);
+								//
+								debug("IOException für " + zieldatei);
+								e.printStackTrace();
 								return;
 							}
 			System.out.println("Das scheint funktioniert zu haben.");
@@ -96,22 +103,21 @@ debug("IOException für " + zieldatei);
 		public void löschen(CivitasSaveable saveable) {
 			
 		}
-	
-	private static String chain(String dateipfad, String relativerNameDatei) {
-		String chain = dateipfad + "/" + relativerNameDatei;
-		return chain;
-	}
 	public String getArbeitsverzeichnis() {
 		return absoluterPfadHauptOrdner;
 	}
 	private String getDateipfad(CivitasSaveable saveable) {
-		String saveableRelativerPfad = chain(saveable.getSpeicherortRelativ(), saveable.getName());
-		String zielspeicherort = chain(stammverzeichnis, saveableRelativerPfad);
-		String saveableDateiname = saveable.getListenposition() + "." + CivitasMain.dateiendung;
-		
-		return chain(zielspeicherort , saveableDateiname) ;
+		String zielspeicherort = chain(stammverzeichnis, saveable.getSpeicherortRelativ());
+		String saveableDateiname = chain(zielspeicherort, saveable.getName() + "." + CivitasMain.dateityp);
+		return saveableDateiname;
 	}
 	private void debug(String msg) {
-		CivitasMain.debug("[Dateisystem]" + msg);
+		//
+		CivitasMain.debug(0, "[Dateisystem] " + msg);
+	}
+	
+	public static String chain(String dateipfad, String relativerNameDatei) {
+		String chain = dateipfad + "/" + relativerNameDatei;
+		return chain;
 	}
 }

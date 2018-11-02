@@ -35,7 +35,7 @@ public class Welt implements CivitasSaveable {
 	
 	public void debug(String msg) {
 		msg = "[Welt]" + msg;
-		CivitasMain.debug(msg);
+		CivitasMain.debug(0, msg);
 	}
 
 	@Override

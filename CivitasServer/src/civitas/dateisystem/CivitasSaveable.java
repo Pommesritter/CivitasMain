@@ -20,7 +20,8 @@ public interface CivitasSaveable extends Serializable {
 	abstract String getSpeicherortRelativ();
 	/*
 	 * Innerhalb dieses Ordners wird dann ein weiterer Ordner erzeugt, 
-	 * der den Klassennamen trägt.
+	 * der den Klassennamen trägt. 
+	 * Die Datei wird den Instanznamen tragen.
 	 * wenn getSpeicherortRelativ eine leere Zeichenkette 
 	 * zurückgibt, dann wird im Hauptordner ein Ordner mit dem 
 	 * Namen erzeugt, der in der Klasse angegeben ist.

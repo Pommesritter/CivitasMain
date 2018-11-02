@@ -7,15 +7,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URI;
 
 import civitas.dateisystem.Dateisystem;
 import civitas.world.Welt;
 
 public class CivitasMain {
-	private static Dateisystem dateisystem = null;
-	private static final String dateipfad = 
-			System.getProperty("user.home") + "/AppData/CivitasServer";
-	public static final String dateiendung = "ser";
+	
+	private static URI dateiuri;
+	
+	public static final String dateisystemname = "dateisystem";
+	public static final String dateityp = "ser";
 	/**
 	 * Liste der erlaubten Hauptargumente
 	 * Jedes erlaubte Argument muss hier eingetragen sein.
@@ -45,10 +47,13 @@ public class CivitasMain {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		System.out.println("*****************" +
-						   "  Civitas Server - Hauptpaket  " +
-						   "*****************");
+	public static void main(String[] args) throws Exception {
+		
+		dateiuri = CivitasMain.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+		File jarfile = new File(dateiuri);
+		dateiuri = jarfile.getParentFile().toURI();
+		final int debuglayer = 0;
+		System.out.println("*****************  Civitas Server - Hauptpaket  *****************");
 		
 		if(args.length==0) {
 			System.out.println("Bitte Argumente angeben.");
@@ -72,12 +77,7 @@ public class CivitasMain {
 						switch(args[1]) {
 						//////////////////dateisystem init///////////////////
 							case "init":
-								dateisystemInit();
-							return;
-							/////////////dateisystem check///////////////////		
-							case "check":
-								checkDateisystem();
-								
+								initFileSystem(debuglayer);
 							return;
 							///////////////usw/usw/usw/usw///////////////////	
 							case "usw.":
@@ -100,7 +100,7 @@ public class CivitasMain {
 						switch(args[1]) {
 							//////////////////////////////////////////////////
 							case "welt":
-								test(args);
+								test(args, debuglayer);
 							return;
 							//////////////////////////////////////////////////
 							case "": erlaubteArgsTestAusgeben() ;
@@ -117,14 +117,18 @@ public class CivitasMain {
 //end/////////////////////////////////////////////////////////////////////////
 		System.out.println("Bitte einen gültigen Befehl eingeben: ");
 		erlaubteArgsAusgeben();
-		exit(0);
+		exitError(0);
 		
 	}
 	
 	//end main
 	
 	
-
+/*
+ * IMPORTANT:
+ * ONLY USE exit() IN MAIN METHODS; 
+ * ONLY USE exit(error code) IN SUBMETHODS
+ */
 	
 	
 	
@@ -133,185 +137,168 @@ public class CivitasMain {
 	 * oder die Datei gelöscht wurde,
 	 * aktualisiert diese Methode das Dateisystem.
 	 */
-		private static void dateisystemInit() {
-			dateisystemAuslesen();
-			if(dateisystem==null) {
-				dateisystem = new Dateisystem();
-			debug("Kein Dateisystem gespeichert, erstelle neues...");
-				dateisystemSpeichern();
+		private static void initFileSystem(int debuglayer) {
+			debugExec(debuglayer, "exec initFilySystem...");
+			try {
+				debug(debuglayer, "try...");
+				readFileSystemFromPath(debuglayer + 1);
+				debug(debuglayer, "success!");
+			} catch (IOException e) {
+				debug(debuglayer, "catch...");
+				debug(debuglayer, "Die Datei scheint leer zu sein. ");
+				debug(debuglayer, "try saveFileSystem...");
+				saveFileSystem(debuglayer + 1);
+				debug(debuglayer, "Dateisystem initialisiert.");
 			}
+		
 			System.out.println("Dateisystem wurde Initialisiert.");
-			exit(0);
+			exit();
 		}
+		
+		
 		/**
-		 * Liest das aktuelle Dateisystem aus dem 
-		 * angegebenen Pfad (Konstante Dateipfad)
+		 * Method for the command "CivitasServer test [...]"
+		 * 
+		 * @param args
 		 */
-		private static void dateisystemAuslesen() {
-			FileInputStream filestream  = null;
-			ObjectInputStream objectinput = null;
-			String dateisystempfad = dateipfad + "/bin/dateisystem."+ dateiendung;
+		private static void test(String[] args, int debuglayer) {
+			debugExec(debuglayer, "test...");
+			//TODO: Argumente switchen
+			if(args.length == 2) {
+				if(args[1].equals("welt") ) {
+					debug(debuglayer, "Erstelle und speichere Welt mit dem Testindex 9999" 
+							+  "...");
+					Welt neueWelt = new Welt(9999);
+					getFileSystem(debuglayer + 1).speichern(neueWelt);
+					
+					
+					
+				}
+				else {
+					erlaubteArgsTestAusgeben();
+					exitError(0);
+				}
+				return;
+			}
+			exit();
+			
+		}
+		
+		/**
+		 * Liest das aktuelle Dateisystem 
+		 * Der Pfad ist in dieser Klasse angegeben (Konstante "dateiuri")
+		 */
+		private static Dateisystem readFileSystemFromPath(int debuglayer) throws IOException {
+			debugExec(debuglayer, "readFileSystemFromPath...");
+			String dateisystempfad = getSubfolderPathOf("dateisystem." + dateityp);
 			
 			try {
-				File dateisystemfile = 
-				new File(dateisystempfad);
-			debug("Dateisystem wird geladen aus " + dateisystempfad);
-				dateisystemfile.createNewFile();
+					File datasystemfile = new File(dateisystempfad);
+					debug(debuglayer, "Dateisystem wird gelesen aus Datei " + datasystemfile);
+					
+					//In case the file does not exist, it will be created and standartized now.
+					if(!datasystemfile.exists()) {
+						debug(debuglayer, "Diese Datei existiert nicht.");
+						debug(debuglayer, "Erstelle neu...");
+						//Creating new file
+						datasystemfile.getParentFile().mkdirs();
+						datasystemfile.createNewFile();
+					
+					
+						//Stream the file system out of the File
+						FileInputStream fs = new FileInputStream(datasystemfile);
+						
+						ObjectInputStream oi = new ObjectInputStream(fs);
+						Dateisystem filesys = (Dateisystem) oi.readObject();
+					
+						fs.close();
+						oi.close();
+						return filesys;
+					}
+					else {
+						//Stream the file system out of the File
+						FileInputStream fs = new FileInputStream(datasystemfile);
+						
+						ObjectInputStream oi = new ObjectInputStream(fs);
+						
+						Dateisystem filesys = (Dateisystem) oi.readObject();
+						debug(debuglayer, "Vorhandenes Dateisystem wurde ausgelesen.");
+						return filesys;
+					
+					}
+					
+					
+			} catch (FileNotFoundException e) {
+				debug(debuglayer, "Es konnte kein Dateisystem gefunden werden.");
+				debug(debuglayer, "Bitte mit 'CivitasServer dateisystem init' initialisieren.");
+				e.printStackTrace();
+					return null;
 				
-				filestream = new FileInputStream(dateisystemfile);
-				objectinput = new ObjectInputStream(filestream);
-				dateisystem = (Dateisystem) objectinput.readObject();
-				
-				filestream.close();
-				objectinput.close();
-				if(dateisystem == null) {
-			debug(
-						"Dateisystem konnte nicht aus vorhandenen Dateien "
-						+ "ausgelesen werden.");
-		exit();
-				}
-			debug("Vorhandenes Dateisystem wurde ausgelesen.");
-				} catch (FileNotFoundException e1) {
-			debug(
-						"Es konnte kein Dateisystem gefunden werden.");
-			debug(
-						"Bitte mit 'CivitasServer dateisystem init' initialisieren.");
-		exit();
-					} catch (IOException e) { 
-			debug("Eine IOException ist aufgetreten. Es wurde nichts" +
-					"initialisiert.");
-		exit();
-						} catch (ClassNotFoundException e) { 
-			debug("Eine ClassNotFoundException ist aufgetreten. Es " +
-					"wurde nichtsinitialisiert.");
-							e.printStackTrace();
-		exit();
-							}
-		}
-		
-		private static void checkDateisystem() {
-			
-		}
-		
-		/**
-		 * Überprüft, ob ein Dateisystem im Programm registriert ist.
-		 */
-		private static boolean hasDateisystem() {
-			if(dateisystem == null) {
-			debug("Es ist scheinbar noch kein "
-						+ "Dateisystem initialisiert worden.");
-				return false;
+			} catch (ClassNotFoundException e) { 
+				debug(debuglayer, "Eine ClassNotFoundException ist aufgetreten.");
+				e.printStackTrace();
+					return null;
 			}
-			return true;
+		}
+			
+		/**
+		 * Speichert das geladene Dateisystem im konstanten Pfad ab.
+		 * @return 
+		 */
+		private static Dateisystem saveFileSystem(int debuglayer) {
+			debugExec(debuglayer, "saveFileSystem...");
+			Dateisystem filesys = new Dateisystem();
+			String dateisystempfad = getSubfolderPathOf("dateisystem." + dateityp);
+			File dateisystemfile = new File(dateisystempfad);
+			
+			
+			debug(debuglayer, "Path: " + dateisystemfile);
+			////////////////////BEGIN IO-try
+			try {
+				debug(debuglayer, "try..");
+				dateisystemfile.getParentFile().mkdirs();
+				dateisystemfile.createNewFile();
+				FileOutputStream filestream = new FileOutputStream( dateisystemfile );
+				ObjectOutputStream objectoutput = new ObjectOutputStream(filestream);
+				objectoutput.writeObject(filesys);
+				filestream.close();
+				objectoutput.close();
+				
+				debug(debuglayer, "Vorhandenes Dateisystem wurde gespeichert.");
+				////////////////////BEGIN Catch-Blöcke
+					} catch (FileNotFoundException e1) {
+						debug(debuglayer, "Speichern fehlgeschlagen: Es konnte kein Dateisystem gefunden werden.");
+						if(debug)
+							e1.printStackTrace();
+						return null;
+					} catch (IOException e) { 
+							e.printStackTrace();
+							debug(debuglayer, "IOException für " + dateisystemfile);
+							
+					}
+				debug(debuglayer, "success!");
+				////////////////////END Catch
+			////////////////////END IO-try
+				
+			return filesys;
+		}
+		public static Dateisystem getFileSystem(int debuglayer) {
+			debugExec(debuglayer, "getFileSystem");
+			
+			try {
+				return readFileSystemFromPath(debuglayer + 1);
+				
+			} catch (IOException e) {
+				return saveFileSystem(debuglayer + 1);
+			}
 		}
 		private static void test() {
+			debugExec(1, "exec test");
 				System.out.println("Test!");
-				exit(0);
+				exit();
 		}
 
-		
 
-	
-	/**
-	 * Speichert das geladene Dateisystem im konstanten Pfad ab.
-	 */
-	private static void dateisystemSpeichern() {
-		FileOutputStream filestream  = 
-				null;
-		ObjectOutputStream objectoutput = 
-				null;
-		File dateisystemfile = new File(
-				dateipfad + 
-				"/bin/dateisystem"+ "."+ dateiendung);
-		
-		debug("Dateisystem gespeichert unter " + dateisystemfile);
-		////////////////////BEGIN IO-try
-		try {
-			dateisystemfile.getParentFile().mkdirs();
-			dateisystemfile.createNewFile();
-			filestream = new FileOutputStream( dateisystemfile );
-			objectoutput = new ObjectOutputStream(filestream);
-			objectoutput.writeObject(dateisystem);
-			filestream.close();
-			objectoutput.close();
-			
-			debug("Vorhandenes Dateisystem wurde ausgelesen.");
-			////////////////////BEGIN Catch-Blöcke
-				} catch (FileNotFoundException e1) {
-					debug("Speichern fehlgeschlagen: "
-							+ "Es konnte kein Dateisystem gefunden werden.");
-					if(debug)
-						e1.printStackTrace();
-					return;
-					} catch (IOException e) { 
-						e.printStackTrace();
-						debug("IOException für " + dateisystemfile);
-						
-					}
-			////////////////////END Catch
-		////////////////////END IO-try
-		if(dateisystem == null) {
-			debug("Im Programm konnte kein Dateisystem gefunden werden.");
-		}
-		exit();
-	}
-	
-	public static String getHauptverzeichnis() {
-		return dateipfad;
-	}
-
-	
-	private static void test(String[] args) {
-		
-		//TODO: Argumente switchen
-		if(args.length == 2) {
-			if(args[1].equals("welt") ) {
-				debug("Erstelle und speichere Welt mit dem Testindex 9999" 
-						+  "...");
-				Welt neueWelt = new Welt(9999);
-				
-				if(hasDateisystem()) {
-					dateisystem.speichern(neueWelt);
-					exit(0);
-				} else {
-				exit("Das Dateisystem ist noch nicht "
-						+ "initialisiert. ");
-				}
-				
-				
-				
-			}
-			else {
-				erlaubteArgsTestAusgeben();
-				exit(0);
-			}
-			return;
-		}
-		
-	}
-	public static void debug(String nachricht) {
-		if(debug == true) {
-			System.out.println("[DEBUG] " + nachricht);
-		}
-		else {
-			System.out.println("+");
-			System.out.println("-");
-			System.out.println("+");
-		}
-	}
-	
-	private static void exit() {
-		System.exit(0);
-	}
-	private static void exit(int status) {
-		System.exit(status);
-	}
-	private static void exit(String meldung) {
-		System.out.println(meldung);
-		System.exit(0);
-	}
-	
-	
 	
 	/**
 	 * Erlaubte Argumente für "CivitasServer [...]" ausgeben 
@@ -322,7 +309,7 @@ public class CivitasMain {
 		for(String s : erlaubteArgumente) {
 			System.out.println("* " + s);
 		}
-		exit(0);
+		exitError(0);
 	}
 	/**
 	 * Erlaubte Argumente für "CivitasServer dateisystem [...] ausgeben 
@@ -333,7 +320,7 @@ public class CivitasMain {
 		for(String s : erlaubteArgumenteDateisystem) {
 			System.out.println("* " + s);
 		}
-		exit(0);
+		exitError(0);
 	}
 	/**
 	 * Erlaubte Argumente für "CivitasServer test [...] ausgeben 
@@ -344,6 +331,52 @@ public class CivitasMain {
 		for(String s : erlaubteArgumenteTest) {
 			System.out.println("* " + s);
 		}
-		exit(0);
+		exitError(0);
+	}
+	
+	/**
+	 * @param The subfolder within the main data folder
+	 * @return The absolute path of given subfolder
+	 */
+	public static String getSubfolderPathOf(String subfolder) {
+		return Dateisystem.chain(dateiuri.getPath(), subfolder);
+	}
+
+	
+	/**
+	 *  @return The absolute path of the main data folder 
+	 */
+	public static String getHauptverzeichnis() {
+		return dateiuri.getPath();
+	}
+	
+	private static void exit() {
+		debug(0, "Befehl ausgeführt.");
+		System.exit(0);
+	}
+	/**
+	 * 
+	 * DEBUGGER of the plugin. 
+	 * @param level
+	 * @param nachricht
+	 */
+	public static void debug(int level, String nachricht) {
+		if(debug != true) {
+			return;
+		}
+		for(; level > 0; level--) {
+			nachricht = "  " + nachricht;
+		}
+		System.out.println("[DEBUG] " + nachricht);
+	}
+	public static void debugExec(int debuglayer, String methodname) {
+		if(!debug) return;
+		debug(debuglayer - 1, "[EXECUTING]" + methodname);
+		
+		
+	}
+	private static void exitError(int status) {
+		debug(0, "Bei der Ausführung trat ein Fehler auf.");
+		System.exit(status);
 	}
 }
