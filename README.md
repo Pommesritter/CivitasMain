@@ -1,4 +1,4 @@
-#The Civitas server project
+# The Civitas server project
 
 CivitasServer is supposed to be an **RPG gameserver interface** which creates and manages the game world, player lists, authentication, leveling curves, trading, game dynamics etc.
 
