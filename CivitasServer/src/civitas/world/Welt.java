@@ -2,6 +2,7 @@ package civitas.world;
 
 import civitas.CivitasMain;
 import civitas.dateisystem.CivitasSaveable;
+import civitas.dateisystem.CivitasSaveableObject;
 
 public class Welt implements CivitasSaveable {
 	/**
@@ -10,12 +11,18 @@ public class Welt implements CivitasSaveable {
 	private static final long serialVersionUID = 2154569878018521490L;
 	
 	private int index = 0;
-	private String name = "welt";
-	public Welt(int listenindex) {
+	private String name;
+	
+	/**
+	 * @param name : Name der Welt
+	 * @param listenindex : Index in der Weltenliste
+	 */
+	public Welt(String name, int listenindex) {
 		if(listenindex < 0) {
 			debug("Der angegebene Index scheint negativ zu sein.");
 			return;
 		}
+		this.name = name;
 		this.index = listenindex;
 	}
 	
@@ -25,7 +32,7 @@ public class Welt implements CivitasSaveable {
 
 	@Override
 	public String getSpeicherortRelativ() {
-		return "spieldateien";
+		return CivitasSaveableObject.WORLD.getFolderPath();
 	}
 
 	@Override
@@ -41,5 +48,10 @@ public class Welt implements CivitasSaveable {
 	@Override
 	public void setListenposition(int i) {
 		index = i;
+	}
+
+	@Override
+	public void setName(String name) {
+		this.name = name;
 	}
 }

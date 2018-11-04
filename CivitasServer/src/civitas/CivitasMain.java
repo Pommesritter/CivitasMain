@@ -9,29 +9,28 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 
+import civitas.dateisystem.CivitasSaveableObject;
 import civitas.dateisystem.Dateisystem;
 import civitas.world.Welt;
 
 public class CivitasMain {
 	
+	//Wird beim starten auf das Verzeichnis gesetzt, in dem die .jar ausgeführt wird.
 	private static URI dateiuri;
 	
 	public static final String dateisystemname = "dateisystem";
-	public static final String dateityp = "ser";
+	public static final String dateityp = ".ser";
 	/**
 	 * Liste der erlaubten Hauptargumente
 	 * Jedes erlaubte Argument muss hier eingetragen sein.
 	 * Wenn nicht eingetragene Argumente verwendet werden, 
 	 * bricht das Programm mit Code 0 ab.
 	 */
-	private final static String[] erlaubteArgumente = 
-		{ "dateisystem", "test" };
+	private final static String[] erlaubteArgumente = { "dateisystem", "test" };
 	//und so weiter...
-	private final static String[] erlaubteArgumenteDateisystem = 
-		{ "init", "check" };
+	private final static String[] erlaubteArgumenteDateisystem = { "init", "check" };
 
-	private final static String[] erlaubteArgumenteTest = 
-		{ " -+- ", "welt" };
+	private final static String[] erlaubteArgumenteTest = { "welt [create / readinfo]" };
 	//TODO - Weitere Argumente...
 	
 	/**
@@ -57,7 +56,7 @@ public class CivitasMain {
 		
 		if(args.length==0) {
 			System.out.println("Bitte Argumente angeben.");
-			erlaubteArgsAusgeben();
+			erlaubteArgsAusgeben("", erlaubteArgumente);
 			System.exit(0);
 		}
 		
@@ -84,7 +83,7 @@ public class CivitasMain {
 								
 							return;
 						//////////////////////////////////////////////////////
-						} } else erlaubteArgsDateisystemAusgeben();
+						} } else erlaubteArgsAusgeben("dateisystem", erlaubteArgumenteDateisystem);
 					
 				return;
 				//////////////////////////////////////////////////////////////
@@ -93,21 +92,10 @@ public class CivitasMain {
 				
 				
 	//begin////////////BEFEHLSPARAMETER "test"////////////////////////////////
-				case "test":
-					if(args.length > 1) {
-						
-					//begin//////////////SWITCH ARGS[1]//////////////////////
-						switch(args[1]) {
-							//////////////////////////////////////////////////
-							case "welt":
-								test(args, debuglayer);
-							return;
-							//////////////////////////////////////////////////
-							case "": erlaubteArgsTestAusgeben() ;
-						} 
-					//end//////////////ENDE SWITCH ARGS[1]////////////////////
-						} else test();
+				case "test": {
+					test(args, debuglayer);
 					return;      
+				}
 	//end///////////////ENDE BEFEHLSPARAMETER TEST////////////////////////////
 				
 			}
@@ -116,7 +104,7 @@ public class CivitasMain {
 //end////////////ENDE HAUPTSWITCH CIVITASSERVER///////////////////////////////
 //end/////////////////////////////////////////////////////////////////////////
 		System.out.println("Bitte einen gültigen Befehl eingeben: ");
-		erlaubteArgsAusgeben();
+		erlaubteArgsAusgeben("", erlaubteArgumente);
 		exitError(0);
 		
 	}
@@ -162,23 +150,59 @@ public class CivitasMain {
 		 * @param args
 		 */
 		private static void test(String[] args, int debuglayer) {
+			
+			
 			debugExec(debuglayer, "test...");
-			//TODO: Argumente switchen
-			if(args.length == 2) {
-				if(args[1].equals("welt") ) {
-					debug(debuglayer, "Erstelle und speichere Welt mit dem Testindex 9999" 
-							+  "...");
-					Welt neueWelt = new Welt(9999);
-					getFileSystem(debuglayer + 1).speichern(neueWelt);
-					
-					
-					
-				}
-				else {
-					erlaubteArgsTestAusgeben();
-					exitError(0);
-				}
+
+			//CivitasServer test
+			if(args.length == 1 ) {
+				test();
 				return;
+			}
+				
+			switch(args[1]) {
+				//CivitasServer test welt ...
+				case "welt" : 
+					{
+					String testname = "test_world";
+					int testindex = 9999;
+						
+					if(args.length == 2) {
+						//CivitasServer test welt
+						erlaubteArgsAusgeben("test", erlaubteArgumenteTest);
+						return;
+						}
+					
+					//CivitasServer test welt [...]
+						
+					switch(args[2]) {
+						case "create" : {
+							debug(debuglayer, "Erstelle und speichere Welt mit dem Testindex " + testindex + "...");
+							Welt neueWelt = new Welt(testname, testindex);
+							getFileSystem(debuglayer + 1).speichern(neueWelt);
+						
+							return;
+						}
+						case "readinfo": {
+							debug(debuglayer, "reading existing test world...");
+							try {
+								Welt w = (Welt) getFileSystem(debuglayer).lesen(CivitasSaveableObject.WORLD, testname);
+								out("Test world name: " + w.getName());
+								out("Test world index: " + w.getListenposition());
+								out("Test world relative path: " + w.getSpeicherortRelativ());
+								} catch (ClassNotFoundException e) {
+									e.printStackTrace();
+								} catch (IOException e) {
+									debug(debuglayer, "File for testing world could not be read.");
+									e.printStackTrace();
+							}
+							return;
+						}
+					}
+					debug (debuglayer, "???");
+					//CivitasServer test welt [??????]
+					erlaubteArgsAusgeben("test", erlaubteArgumenteTest);
+				}
 			}
 			exit();
 			
@@ -190,7 +214,7 @@ public class CivitasMain {
 		 */
 		private static Dateisystem readFileSystemFromPath(int debuglayer) throws IOException {
 			debugExec(debuglayer, "readFileSystemFromPath...");
-			String dateisystempfad = getSubfolderPathOf("dateisystem." + dateityp);
+			String dateisystempfad = getSubfolderPathOf("dateisystem" + dateityp);
 			
 			try {
 					File datasystemfile = new File(dateisystempfad);
@@ -222,6 +246,7 @@ public class CivitasMain {
 						ObjectInputStream oi = new ObjectInputStream(fs);
 						
 						Dateisystem filesys = (Dateisystem) oi.readObject();
+						oi.close();
 						debug(debuglayer, "Vorhandenes Dateisystem wurde ausgelesen.");
 						return filesys;
 					
@@ -248,7 +273,7 @@ public class CivitasMain {
 		private static Dateisystem saveFileSystem(int debuglayer) {
 			debugExec(debuglayer, "saveFileSystem...");
 			Dateisystem filesys = new Dateisystem();
-			String dateisystempfad = getSubfolderPathOf("dateisystem." + dateityp);
+			String dateisystempfad = getSubfolderPathOf("dateisystem" + dateityp);
 			File dateisystemfile = new File(dateisystempfad);
 			
 			
@@ -294,45 +319,9 @@ public class CivitasMain {
 		}
 		private static void test() {
 			debugExec(1, "exec test");
-				System.out.println("Test!");
+				out("Test!");
 				exit();
 		}
-
-
-	
-	/**
-	 * Erlaubte Argumente für "CivitasServer [...]" ausgeben 
-	 * und Programm abbrechen
-	 */
-	private static void erlaubteArgsAusgeben() {
-		System.out.println("Erlaubte Argumente: ");
-		for(String s : erlaubteArgumente) {
-			System.out.println("* " + s);
-		}
-		exitError(0);
-	}
-	/**
-	 * Erlaubte Argumente für "CivitasServer dateisystem [...] ausgeben 
-	 * und Programm abbrechen
-	 */
-	private static void erlaubteArgsDateisystemAusgeben() {
-		System.out.println("Erlaubte Argumente für das Civitas-Dateisystem: ");
-		for(String s : erlaubteArgumenteDateisystem) {
-			System.out.println("* " + s);
-		}
-		exitError(0);
-	}
-	/**
-	 * Erlaubte Argumente für "CivitasServer test [...] ausgeben 
-	 * und Programm abbrechen
-	 */
-	private static void erlaubteArgsTestAusgeben() {
-		System.out.println("Erlaubte Argumente: ");
-		for(String s : erlaubteArgumenteTest) {
-			System.out.println("* " + s);
-		}
-		exitError(0);
-	}
 	
 	/**
 	 * @param The subfolder within the main data folder
@@ -354,6 +343,9 @@ public class CivitasMain {
 		debug(0, "Befehl ausgeführt.");
 		System.exit(0);
 	}
+	public static void out(String s) {
+		System.out.println(s);
+	}
 	/**
 	 * 
 	 * DEBUGGER of the plugin. 
@@ -367,7 +359,7 @@ public class CivitasMain {
 		for(; level > 0; level--) {
 			nachricht = "  " + nachricht;
 		}
-		System.out.println("[DEBUG] " + nachricht);
+		out("[DEBUG] " + nachricht);
 	}
 	public static void debugExec(int debuglayer, String methodname) {
 		if(!debug) return;
@@ -378,5 +370,13 @@ public class CivitasMain {
 	private static void exitError(int status) {
 		debug(0, "Bei der Ausführung trat ein Fehler auf.");
 		System.exit(status);
+	}
+	public static void erlaubteArgsAusgeben(String befehl, String[] allowedArgs) {
+		String temp = "Allowed arguments for '" + befehl + "'";
+		out(temp);
+		
+		for(String s : allowedArgs) {
+			out("* " + s);
+		}
 	}
 }

@@ -27,6 +27,7 @@ public interface CivitasSaveable extends Serializable {
 	 * Namen erzeugt, der in der Klasse angegeben ist.
 	 */
 	abstract String getName();
+	abstract void setName(String name);
 	abstract int getListenposition();
 	abstract void setListenposition(int i);
 }

@@ -1,9 +1,11 @@
 package civitas.dateisystem;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -66,7 +68,7 @@ public class Dateisystem  implements Serializable{
 		public void speichern(CivitasSaveable saveable) {
 			
 			//Zieldatei ermitteln
-			File zieldatei = new File( getDateipfad(saveable) );
+			File zieldatei = new File( chain(saveable.getSpeicherortRelativ(), saveable.getName() + CivitasMain.dateityp ));
 			//
 			debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
 			
@@ -100,16 +102,34 @@ public class Dateisystem  implements Serializable{
 			System.out.println("Das scheint funktioniert zu haben.");
 		}
 		
+		public CivitasSaveable lesen(CivitasSaveableObject obj, String name) throws ClassNotFoundException, IOException {
+		
+			CivitasSaveable saveable = null;
+			
+			//Switchhhhhhh it!
+			switch(obj) {
+				case WORLD : {
+						String filename = name + CivitasMain.dateityp;
+						File file = new File( chain (stammverzeichnis  , obj.getFolderPath()) + "/" + filename );
+						//Stream the file system out of the File
+						FileInputStream fs = new FileInputStream(file);
+						ObjectInputStream oi = new ObjectInputStream(fs);
+						saveable = (CivitasSaveable) oi.readObject();
+						fs.close();
+						oi.close();
+					}
+				
+				
+			}
+			
+			return saveable;
+		}
+		
 		public void löschen(CivitasSaveable saveable) {
 			
 		}
 	public String getArbeitsverzeichnis() {
 		return absoluterPfadHauptOrdner;
-	}
-	private String getDateipfad(CivitasSaveable saveable) {
-		String zielspeicherort = chain(stammverzeichnis, saveable.getSpeicherortRelativ());
-		String saveableDateiname = chain(zielspeicherort, saveable.getName() + "." + CivitasMain.dateityp);
-		return saveableDateiname;
 	}
 	private void debug(String msg) {
 		//
