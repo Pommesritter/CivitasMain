@@ -19,7 +19,7 @@ public class CivitasMain {
 	private static URI dateiuri;
 	
 	public static final String dateisystemname = "dateisystem";
-	public static final String dateityp = ".ser";
+	public static final String dateityp = ".cvfile";
 	/**
 	 * Liste der erlaubten Hauptargumente
 	 * Jedes erlaubte Argument muss hier eingetragen sein.
