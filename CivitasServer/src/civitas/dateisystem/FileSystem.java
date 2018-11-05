@@ -20,7 +20,7 @@ import civitas.CivitasMain;
  * der Dateihierarchie verantwortlich ist 
  * 
  */
-public class Dateisystem  implements Serializable{
+public class FileSystem  implements Serializable{
 	/**
 	 * 
 	 */
@@ -39,7 +39,7 @@ public class Dateisystem  implements Serializable{
 	
 	private final String absoluterPfadHauptOrdner = chain(stammverzeichnis, hauptOrdnerName);
 	
-	public Dateisystem (){
+	public FileSystem (){
 		stammverzeichnis = CivitasMain.getHauptverzeichnis();
 	}
 	
@@ -60,10 +60,9 @@ public class Dateisystem  implements Serializable{
 		
 	}
 		/**
-		 * Methode, um ein Objekt nach den Regeln des Datensystems zu speichern.
-		 * Der Hauptordner ist in der Hauptklasse angegeben. Die Unterordner sind in den Saveable-Klassen angegeben.
+		 * Methode, um ein Objekt nach den Regeln des Dateisystems zu speichern.
+		 * Der Ordner ist in den Saveable-Klassen angegeben.
 		 * @param saveable : jedes Objekt, das das Saveable-Interface implementiert.
-		 * 
 		 */
 		public void speichern(CivitasSaveable saveable) {
 			
@@ -102,7 +101,14 @@ public class Dateisystem  implements Serializable{
 			System.out.println("Das scheint funktioniert zu haben.");
 		}
 		
-		public CivitasSaveable lesen(CivitasSaveableObject obj, String name) throws ClassNotFoundException, IOException {
+		public void speichern(CivitasSaveable[] saveableList) {
+			
+			for(CivitasSaveable saveable : saveableList) {
+				speichern(saveable);
+			}
+		}
+		
+		public CivitasSaveable lesen(SaveableList obj, String name) throws ClassNotFoundException, IOException, FileNotFoundException {
 		
 			CivitasSaveable saveable = null;
 			
@@ -127,6 +133,15 @@ public class Dateisystem  implements Serializable{
 		
 		public void löschen(CivitasSaveable saveable) {
 			
+		}
+		
+		/**
+		 * @param obj
+		 * @return : An array containing the object plus its children (World > Land > Town > Person) 
+		 */
+		public CivitasSaveable[] getChildren(CivitasSaveable obj) {
+			//TODO: Die Unterdateien eines Saveable ausgeben 
+			return null;
 		}
 	public String getArbeitsverzeichnis() {
 		return absoluterPfadHauptOrdner;

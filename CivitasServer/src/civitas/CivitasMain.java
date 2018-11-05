@@ -9,9 +9,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 
-import civitas.dateisystem.CivitasSaveableObject;
-import civitas.dateisystem.Dateisystem;
-import civitas.world.Welt;
+import civitas.dateisystem.CivitasSaveable;
+import civitas.dateisystem.SaveableList;
+import civitas.dateisystem.FileSystem;
+import civitas.world.World;
 
 public class CivitasMain {
 	
@@ -105,7 +106,7 @@ public class CivitasMain {
 //end/////////////////////////////////////////////////////////////////////////
 		System.out.println("Bitte einen gültigen Befehl eingeben: ");
 		erlaubteArgsAusgeben("", erlaubteArgumente);
-		exitError(0);
+		exit();
 		
 	}
 	
@@ -178,24 +179,21 @@ public class CivitasMain {
 					switch(args[2]) {
 						case "create" : {
 							debug(debuglayer, "Erstelle und speichere Welt mit dem Testindex " + testindex + "...");
-							Welt neueWelt = new Welt(testname, testindex);
+							World neueWelt = new World(testname, testindex);
 							getFileSystem(debuglayer + 1).speichern(neueWelt);
 						
 							return;
 						}
 						case "readinfo": {
 							debug(debuglayer, "reading existing test world...");
-							try {
-								Welt w = (Welt) getFileSystem(debuglayer).lesen(CivitasSaveableObject.WORLD, testname);
-								out("Test world name: " + w.getName());
-								out("Test world index: " + w.getListenposition());
-								out("Test world relative path: " + w.getSpeicherortRelativ());
-								} catch (ClassNotFoundException e) {
-									e.printStackTrace();
-								} catch (IOException e) {
-									debug(debuglayer, "File for testing world could not be read.");
-									e.printStackTrace();
+							World w = (World) read(debuglayer + 1, SaveableList.WORLD, testname);
+							if(w == null) {
+								debug(debuglayer, "test world was not found");
+								return;
 							}
+							out("Test world name: " + w.getName());
+							out("Test world index: " + w.getListenposition());
+							out("Test world relative path: " + w.getSpeicherortRelativ());
 							return;
 						}
 					}
@@ -212,7 +210,7 @@ public class CivitasMain {
 		 * Liest das aktuelle Dateisystem 
 		 * Der Pfad ist in dieser Klasse angegeben (Konstante "dateiuri")
 		 */
-		private static Dateisystem readFileSystemFromPath(int debuglayer) throws IOException {
+		private static FileSystem readFileSystemFromPath(int debuglayer) throws IOException {
 			debugExec(debuglayer, "readFileSystemFromPath...");
 			String dateisystempfad = getSubfolderPathOf("dateisystem" + dateityp);
 			
@@ -233,7 +231,7 @@ public class CivitasMain {
 						FileInputStream fs = new FileInputStream(datasystemfile);
 						
 						ObjectInputStream oi = new ObjectInputStream(fs);
-						Dateisystem filesys = (Dateisystem) oi.readObject();
+						FileSystem filesys = (FileSystem) oi.readObject();
 					
 						fs.close();
 						oi.close();
@@ -245,7 +243,7 @@ public class CivitasMain {
 						
 						ObjectInputStream oi = new ObjectInputStream(fs);
 						
-						Dateisystem filesys = (Dateisystem) oi.readObject();
+						FileSystem filesys = (FileSystem) oi.readObject();
 						oi.close();
 						debug(debuglayer, "Vorhandenes Dateisystem wurde ausgelesen.");
 						return filesys;
@@ -260,9 +258,10 @@ public class CivitasMain {
 					return null;
 				
 			} catch (ClassNotFoundException e) { 
-				debug(debuglayer, "Eine ClassNotFoundException ist aufgetreten.");
+				debug(debuglayer, "FAILED: ClassNotFoundException");
 				e.printStackTrace();
-					return null;
+				exitError("could not read file system. Aborting task...");
+				return null;
 			}
 		}
 			
@@ -270,9 +269,9 @@ public class CivitasMain {
 		 * Speichert das geladene Dateisystem im konstanten Pfad ab.
 		 * @return 
 		 */
-		private static Dateisystem saveFileSystem(int debuglayer) {
+		private static FileSystem saveFileSystem(int debuglayer) {
 			debugExec(debuglayer, "saveFileSystem...");
-			Dateisystem filesys = new Dateisystem();
+			FileSystem filesys = new FileSystem();
 			String dateisystempfad = getSubfolderPathOf("dateisystem" + dateityp);
 			File dateisystemfile = new File(dateisystempfad);
 			
@@ -289,10 +288,10 @@ public class CivitasMain {
 				filestream.close();
 				objectoutput.close();
 				
-				debug(debuglayer, "Vorhandenes Dateisystem wurde gespeichert.");
+				debug(debuglayer, "existing file system has been saved.");
 				////////////////////BEGIN Catch-Blöcke
 					} catch (FileNotFoundException e1) {
-						debug(debuglayer, "Speichern fehlgeschlagen: Es konnte kein Dateisystem gefunden werden.");
+						debug(debuglayer, "FAILED: file " + dateisystemname + dateityp +" was not found on disk.");
 						if(debug)
 							e1.printStackTrace();
 						return null;
@@ -307,7 +306,7 @@ public class CivitasMain {
 				
 			return filesys;
 		}
-		public static Dateisystem getFileSystem(int debuglayer) {
+		public static FileSystem getFileSystem(int debuglayer) {
 			debugExec(debuglayer, "getFileSystem");
 			
 			try {
@@ -328,7 +327,7 @@ public class CivitasMain {
 	 * @return The absolute path of given subfolder
 	 */
 	public static String getSubfolderPathOf(String subfolder) {
-		return Dateisystem.chain(dateiuri.getPath(), subfolder);
+		return FileSystem.chain(dateiuri.getPath(), subfolder);
 	}
 
 	
@@ -363,13 +362,13 @@ public class CivitasMain {
 	}
 	public static void debugExec(int debuglayer, String methodname) {
 		if(!debug) return;
-		debug(debuglayer - 1, "[EXECUTING]" + methodname);
+		debug(debuglayer - 1, "[executing]" + methodname);
 		
 		
 	}
-	private static void exitError(int status) {
-		debug(0, "Bei der Ausführung trat ein Fehler auf.");
-		System.exit(status);
+	private static void exitError(String string) {
+		debug(0, string);
+		System.exit(1);
 	}
 	public static void erlaubteArgsAusgeben(String befehl, String[] allowedArgs) {
 		String temp = "Allowed arguments for '" + befehl + "'";
@@ -378,5 +377,29 @@ public class CivitasMain {
 		for(String s : allowedArgs) {
 			out("* " + s);
 		}
+	}
+	
+	public static CivitasSaveable read(int debuglayer, SaveableList obj, String name){
+		
+		switch(obj) {
+			//READ WORLD
+			case WORLD :
+				try {
+				World w = (World) getFileSystem(debuglayer).lesen(obj, name);
+				return w;
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+						} catch (FileNotFoundException e) {
+							out("File for testing world could not be read.");
+								} catch (IOException e) {
+									out("I/O : File for testing world could not be read.");
+				}
+			//READ OTHER OBJECTS 
+			
+			
+		}
+		
+	//IF NONE WAS FOUND; RETURN NULL
+	return null;
 	}
 }

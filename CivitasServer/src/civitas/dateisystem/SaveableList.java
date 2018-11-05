@@ -1,6 +1,6 @@
 package civitas.dateisystem;
 
-public enum CivitasSaveableObject {
+public enum SaveableList {
 	
 	WORLD( "spieldateien/welten" );
 	
@@ -9,7 +9,7 @@ public enum CivitasSaveableObject {
 	/**
 	 * @param filepath : Ordnerpfad, in dem die Datei abgelegt werden soll.
 	 */
-	private CivitasSaveableObject(String filepath) {
+	private SaveableList(String filepath) {
 		this.path=filepath;
 	}
 	
