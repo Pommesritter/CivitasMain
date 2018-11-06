@@ -10,7 +10,7 @@
 
 ### If you wish to participate, please contact me.
 
-(This page is under construction)
+(This page is under construction. I recommend reading into the wiki aswell.)
 ## Description
 
 The core Software of project Civitas. 
