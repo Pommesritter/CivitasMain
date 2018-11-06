@@ -20,3 +20,5 @@ It aims to:
 Remark that all functions of this software are about processing data. The game client will should written in C++, and for user authentication there must be additional software aswell. But - step after step. 
 
 About the client: Writing a whole game client is an ambitious thing to do. Therefore it might be a possibility to first create a spigot plugin which hooks into a Civitas Server (it would be made so that the Spigot server itself is a client of Civitas...). This would provide an environment for testing out the software.
+
+Also note that this project started in german and will be Refractor'd into english step by step.
