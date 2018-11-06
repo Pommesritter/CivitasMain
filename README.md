@@ -3,7 +3,7 @@
 
 ***
 
-### Project Home | [Wiki](https://github.com/Pommesritter/CivitasMain/wiki/Wiki-Home) | [Issues](https://github.com/Pommesritter/CivitasMain/issues) |  [Development Status](https://github.com/Pommesritter/CivitasMain/projects) | [Downloads](https://github.com/Pommesritter/CivitasMain/tree/master/downloads)
+### Project Home | [Wiki](https://github.com/Pommesritter/CivitasMain/wiki/Home) | [Issues](https://github.com/Pommesritter/CivitasMain/issues) |  [Development Status](https://github.com/Pommesritter/CivitasMain/projects) | [Downloads](https://github.com/Pommesritter/CivitasMain/tree/master/downloads)
 
 
 ***
