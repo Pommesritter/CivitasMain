@@ -8,6 +8,8 @@
 
 ***
 
+## If you wish to participate, please contact me.
+
 (This page is under construction)
 ## Description
 
