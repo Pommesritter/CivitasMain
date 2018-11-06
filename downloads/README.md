@@ -4,4 +4,4 @@
 
 # Download section
 
-You can find all the deployed .jar-files here.
+(In case your computer is catching fire, i won't take any responsibility )
