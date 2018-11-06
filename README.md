@@ -1,6 +1,5 @@
 
 # CivitasMain
-## (under construction)
 
 ***
 
@@ -9,6 +8,7 @@
 
 ***
 
+(This page is under construction)
 ## Description
 
 The core Software of project Civitas. 
