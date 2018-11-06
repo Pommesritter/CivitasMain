@@ -193,7 +193,7 @@ public class CivitasMain {
 							}
 							out("Test world name: " + w.getName());
 							out("Test world index: " + w.getListenposition());
-							out("Test world relative path: " + w.getSpeicherortRelativ());
+							out("Test world relative path: " + w.getRelativeFilePath());
 							return;
 						}
 					}

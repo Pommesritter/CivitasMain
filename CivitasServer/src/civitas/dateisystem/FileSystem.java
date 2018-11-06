@@ -67,7 +67,7 @@ public class FileSystem  implements Serializable{
 		public void speichern(CivitasSaveable saveable) {
 			
 			//Zieldatei ermitteln
-			File zieldatei = new File( chain(saveable.getSpeicherortRelativ(), saveable.getName() + CivitasMain.dateityp ));
+			File zieldatei = new File( chain(saveable.getRelativeFilePath(), saveable.getName() + CivitasMain.dateityp ));
 			//
 			debug(saveable.getName() + " wird gespeichert unter " + zieldatei + "...");
 			

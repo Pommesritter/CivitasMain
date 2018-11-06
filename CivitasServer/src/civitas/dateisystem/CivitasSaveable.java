@@ -17,7 +17,7 @@ public interface CivitasSaveable extends Serializable {
 	 *  -"spieldateien", 
 	 *  -"spieldateien/besondere Dateien"
 	 */
-	abstract String getSpeicherortRelativ();
+	abstract String getRelativeFilePath();
 	/*
 	 * Innerhalb dieses Ordners wird dann ein weiterer Ordner erzeugt, 
 	 * der den Klassennamen trägt. 

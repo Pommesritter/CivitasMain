@@ -31,7 +31,7 @@ public class World implements CivitasSaveable {
 	}
 
 	@Override
-	public String getSpeicherortRelativ() {
+	public String getRelativeFilePath() {
 		return SaveableList.WORLD.getFolderPath();
 	}
 
